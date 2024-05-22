@@ -32,30 +32,43 @@ from customer_total_amount_2;
 -- The CTE should include the customer's name, email address, 
 -- rental count, and total amount paid. 
 WITH cte_rental_total AS (
-  SELECT * FROM customer_rental_summary
+  SELECT crs.customer_id, 
+         crs.rental_count, 
+         cta.total_amount
+  FROM customer_rental_summary AS crs
+  JOIN customer_total_amount_2 AS cta ON crs.customer_id = cta.customer_id
 )
-SELECT * FROM cte_rental_total as cte
-join customer_total_amount_2 as cta
-on cta.customer_id = cte.customer_id;
-
+SELECT 
+  cte.customer_id, 
+  CONCAT(c.first_name, ' ', c.last_name) AS customer_name, 
+  c.email, 
+  round(cte.total_amount / cte.rental_count,2) AS average_payment_per_rental
+FROM 
+  cte_rental_total AS cte
+JOIN 
+  customer AS c ON c.customer_id = cte.customer_id;
 
 -- Next, using the CTE, create the query to generate the final 
 -- customer summary report, which should include: customer name, 
 -- email, rental_count, total_paid and average_payment_per_rental, 
 -- this last column is a derived column from total_paid and 
 -- rental_count.
-WITH cte_rental_total_2 AS (
-  SELECT * FROM customer_rental_summary
+WITH cte_customer_summary AS (
+  SELECT
+    crs.customer_name,
+    crs.email,
+    crs.rental_count,
+    cta.total_amount AS total_paid
+  FROM
+    customer_rental_summary crs
+  JOIN
+    customer_total_amount_2 cta ON crs.customer_id = cta.customer_id
 )
-SELECT 
-  cte.customer_id, 
-  CONCAT(c.first_name, ' ', c.last_name) AS customer_name, 
-  c.email, 
-  round(cta.total_amount / cte.rental_count, 2) AS average_payment_per_rental
-FROM 
-  cte_rental_total_2 AS cte
-JOIN 
-  customer_total_amount_2 AS cta ON cta.customer_id = cte.customer_id
-JOIN 
-  customer AS c ON c.customer_id = cte.customer_id;
-
+SELECT
+  customer_name,
+  email,
+  rental_count,
+  total_paid,
+  ROUND(total_paid / rental_count, 2) AS average_payment_per_rental
+FROM
+  cte_customer_summary;
